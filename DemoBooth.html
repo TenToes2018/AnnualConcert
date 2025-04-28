@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>相机拍照+边框合成</title>
+  <style>
+    body { text-align: center; font-family: sans-serif; background-color: #f0f2f5; }
+    #video, #canvas { width: 100%; max-width: 400px; border-radius: 10px; margin-top: 20px; }
+    #capture, #retry, #download { margin: 10px; padding: 10px 20px; font-size: 16px; }
+    #retry, #download { display: none; }
+  </style>
+</head>
+<body>
+
+<h2>📸 拍张照！加上你的专属边框 ✨</h2>
+
+<video id="video" autoplay playsinline></video><br>
+<button id="capture">拍照</button>
+<button id="retry">重新拍摄</button><br>
+<canvas id="canvas" style="display:none;"></canvas><br>
+<a id="download" download="my-photo.png" style="display:none;">📥 下载照片</a>
+
+<script>
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const captureButton = document.getElementById('capture');
+  const retryButton = document.getElementById('retry');
+  const downloadLink = document.getElementById('download');
+  let stream;
+
+  async function startCamera() {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      video.srcObject = stream;
+    } catch (error) {
+      alert('无法访问相机，请检查权限设置！');
+      console.error(error);
+    }
+  }
+
+  captureButton.addEventListener('click', () => {
+    const context = canvas.getContext('2d');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+
+    // 拍下视频流
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // 加载并叠加边框Frame
+    const frame = new Image();
+    frame.src = 'your-frame.png'; // 这里换成你的边框图片
+    frame.onload = () => {
+      context.drawImage(frame, 0, 0, canvas.width, canvas.height);
+
+      // 停止摄像头
+      stream.getTracks().forEach(track => track.stop());
+
+      // 隐藏视频，显示canvas
+      video.style.display = 'none';
+      canvas.style.display = 'block';
+      captureButton.style.display = 'none';
+      retryButton.style.display = 'inline-block';
+      downloadLink.href = canvas.toDataURL('image/png');
+      downloadLink.style.display = 'inline-block';
+    };
+  });
+
+  retryButton.addEventListener('click', () => {
+    location.reload(); // 重新加载页面重新拍照
+  });
+
+  startCamera();
+</script>
+
+</body>
+</html>
