@@ -7,7 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <title>Snap Your Moment!</title>
 
-  <!-- Google Fonts - Poppins -->
+  <!-- Google Fonts - Poppins 字体 -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;700&display=swap" rel="stylesheet">
 
   <style>
@@ -28,12 +28,13 @@
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      background: rgba(255,255,255,0.85);
+      background: rgba(255,255,255,0.8);
       padding: 20px;
       border-radius: 20px;
       box-shadow: 0 4px 10px rgba(0,0,0,0.1);
       max-width: 400px;
       width: 90%;
+
     }
 
     h2 {
@@ -51,8 +52,8 @@
       background: white;
       object-fit: cover;
       object-position: center;
-      transform: scaleX(-1);
-    }
+      transform: scaleX(-1); /* ✅ 只镜像 video 相机画面 */
+     }
 
     canvas {
       width: 100%;
@@ -62,6 +63,7 @@
       background: white;
       object-fit: cover;
       object-position: center;
+     
     }
 
     button {
@@ -76,7 +78,6 @@
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       cursor: pointer;
     }
-
     button:hover {
       background-color: #1565c0;
     }
@@ -136,4 +137,83 @@
   const retryButton = document.getElementById('retry');
   const downloadLink = document.getElementById('download');
   const loadingScreen = document.getElementById('loading');
-  const container
+  const container = document.getElementById('container');
+  let stream;
+
+  async function startCamera() {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      video.srcObject = stream;
+
+      video.onloadedmetadata = () => {
+        loadingScreen.style.display = 'none';
+        container.style.display = 'flex';
+        video.style.display = 'block';
+        captureButton.style.display = 'inline-block';
+      };
+    } catch (error) {
+      alert('Unable to access camera. Please check your permissions!');
+      console.error(error);
+    }
+  }
+
+  startCamera();
+
+  captureButton.addEventListener('click', () => {
+    const context = canvas.getContext('2d');
+    const width = 1080;
+    const height = 1920;
+    canvas.width = width;
+    canvas.height = height;
+
+    const videoAspectRatio = video.videoWidth / video.videoHeight;
+    const canvasAspectRatio = width / height;
+
+    let sx, sy, sWidth, sHeight;
+
+    if (videoAspectRatio > canvasAspectRatio) {
+      sHeight = video.videoHeight;
+      sWidth = sHeight * canvasAspectRatio;
+      sx = (video.videoWidth - sWidth) / 2;
+      sy = 0;
+    } else {
+      sWidth = video.videoWidth;
+      sHeight = sWidth / canvasAspectRatio;
+      sx = 0;
+      sy = (video.videoHeight - sHeight) / 2;
+    }
+    context.save();
+    context.scale(-1, 1); // 水平翻转
+    context.translate(-width, 0); // 画布向右移
+
+    context.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, width, height);
+    
+    context.restore();
+    
+    const frame = new Image();
+    frame.src = 'frame.png';
+    frame.onload = () => {
+      context.drawImage(frame, 0, 0, width, height);
+
+      const timestamp = new Date().toISOString().replace(/[-:.]/g, "").slice(0,15);
+      const fileName = `photo_${timestamp}.png`;
+
+      canvas.style.display = 'block';
+      downloadLink.href = canvas.toDataURL('image/png');
+      downloadLink.download = fileName;
+      downloadLink.style.display = 'inline-block';
+
+      stream.getTracks().forEach(track => track.stop());
+      video.style.display = 'none';
+      captureButton.style.display = 'none';
+      retryButton.style.display = 'inline-block';
+    };
+  });
+
+  retryButton.addEventListener('click', () => {
+    location.reload();
+  });
+</script>
+
+</body>
+</html>
