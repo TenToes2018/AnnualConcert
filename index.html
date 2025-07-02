@@ -3,225 +3,239 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
   <title>Snap Your Moment!</title>
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Schoolbell&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
 
   <style>
-    body {
+    body, html {
       margin: 0;
       padding: 0;
       font-family: 'Chewy', cursive;
-      background: url('bg_demo.png') no-repeat center center fixed;
-      background-size: cover;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+      height: 100%;
       overflow: hidden;
+      background: url('BG%20DEMO.png') no-repeat center center fixed;
+      background-size: cover;
     }
 
     #loading {
       position: fixed;
-      top: 0;
-      left: 0;
       width: 100%;
       height: 100%;
-      background: url('bg_demo.png') no-repeat center center fixed;
-      background-size: cover;
       display: flex;
       justify-content: center;
       align-items: center;
-      font-family: 'Schoolbell', cursive;
-      font-size: 32px;
-      color: #000;
-      z-index: 999;
+      font-size: 24px;
+      font-family: 'Chewy', cursive;
+      background: url('BG%20DEMO.png') no-repeat center center fixed;
+      background-size: cover;
       backdrop-filter: blur(8px);
+      z-index: 999;
+      transition: opacity 0.5s ease;
     }
 
-    #camera-section {
-      display: flex;
+    #startButton {
+      padding: 15px 30px;
+      font-size: 20px;
+      border: none;
+      border-radius: 10px;
+      background-color: #1e88e5;
+      color: white;
+      cursor: pointer;
+    }
+
+    #camera-container {
+      display: none;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      width: 100%;
-      height: 70%;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    #videoWrapper {
       position: relative;
+      width: 90%;
+      max-width: 360px;
     }
 
-    video, canvas {
+    video, canvas, #frameOverlay, #backgroundOverlay {
       width: 100%;
-      height: 100%;
+      border-radius: 16px;
       object-fit: cover;
-      transform: scaleX(-1);
       position: absolute;
       top: 0;
       left: 0;
-    }
-
-    #frame-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      pointer-events: none;
     }
 
     #controls {
+      margin-top: 20px;
+    }
+
+    .scroll-buttons {
       display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 30%;
+      overflow-x: auto;
+      padding: 10px;
       width: 100%;
     }
 
-    #capture {
+    .scroll-buttons img {
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      margin: 0 10px;
+      cursor: pointer;
+      transition: transform 0.3s ease;
+    }
+
+    .scroll-buttons img.selected {
+      transform: scale(1.3);
+      border: 3px solid #1e88e5;
+    }
+
+    button {
       margin: 8px;
       padding: 12px 24px;
-      font-size: 18px;
-      font-weight: 600;
+      font-size: 16px;
+      font-family: 'Chewy', cursive;
       border: none;
       border-radius: 8px;
       background-color: #1e88e5;
       color: white;
-      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       cursor: pointer;
-      font-family: 'Chewy', cursive;
-    }
-
-    .swiper-container {
-      width: 100%;
-      padding: 10px 0;
-    }
-
-    .swiper-slide {
-      width: 80px;
-      height: 80px;
-      border-radius: 10px;
-      overflow: hidden;
-      border: 3px solid transparent;
-      cursor: pointer;
-      transition: transform 0.3s, border-color 0.3s;
-    }
-
-    .swiper-slide-active {
-      transform: scale(1.3);
-      border-color: #1e88e5;
     }
   </style>
 </head>
+
 <body>
-
-<div id="loading">Loading...</div>
-
-<div id="camera-section" style="display: none;">
-  <video id="video" autoplay playsinline></video>
-  <canvas id="canvas" style="display: none;"></canvas>
-  <img id="frame-overlay" src="frame1.png" alt="Frame">
+<div id="loading">
+  <button id="startButton">Start</button>
 </div>
 
-<div id="controls" style="display: none;">
-  <button id="capture">Capture</button>
+<div id="camera-container">
+  <div id="videoWrapper">
+    <video id="video" autoplay playsinline></video>
+    <canvas id="canvas"></canvas>
+    <img id="backgroundOverlay" src="" alt="" />
+    <img id="frameOverlay" src="" alt="" />
+  </div>
 
-  <div class="swiper-container">
-    <div class="swiper-wrapper">
-      <!-- Buttons 1 to 10 -->
-      <div class="swiper-slide"><img src="button1.png" data-frame="frame1.png" data-background="background1.png"></div>
-      <div class="swiper-slide"><img src="button2.png" data-frame="frame2.png" data-background="background2.png"></div>
-      <div class="swiper-slide"><img src="button3.png" data-frame="frame3.png" data-background="background3.png"></div>
-      <div class="swiper-slide"><img src="button4.png" data-frame="frame4.png" data-background="background4.png"></div>
-      <div class="swiper-slide"><img src="button5.png" data-frame="frame5.png" data-background="background5.png"></div>
-      <div class="swiper-slide"><img src="button6.png" data-frame="frame6.png" data-background="background6.png"></div>
-      <div class="swiper-slide"><img src="button7.png" data-frame="frame7.png" data-background="background7.png"></div>
-      <div class="swiper-slide"><img src="button8.png" data-frame="frame8.png" data-background="background8.png"></div>
-      <div class="swiper-slide"><img src="button9.png" data-frame="frame9.png" data-background="background9.png"></div>
-      <div class="swiper-slide"><img src="button10.png" data-frame="frame10.png" data-background="background10.png"></div>
-    </div>
+  <div class="scroll-buttons" id="backgroundButtons"></div>
+  <div class="scroll-buttons" id="frameButtons"></div>
+
+  <div id="controls">
+    <button id="capture">Capture</button>
+    <button id="record">Record</button>
+    <button id="stopRecord" style="display:none;">Stop</button>
+    <button id="retry">Retake</button>
+    <a id="download" style="display:none;">Download</a>
   </div>
 </div>
 
-<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
 <script>
+  let stream, mediaRecorder, recordedChunks = [];
+  const startButton = document.getElementById('startButton');
   const loadingScreen = document.getElementById('loading');
-  const cameraSection = document.getElementById('camera-section');
-  const controls = document.getElementById('controls');
+  const cameraContainer = document.getElementById('camera-container');
   const video = document.getElementById('video');
   const canvas = document.getElementById('canvas');
-  const frameOverlay = document.getElementById('frame-overlay');
+  const backgroundOverlay = document.getElementById('backgroundOverlay');
+  const frameOverlay = document.getElementById('frameOverlay');
   const captureButton = document.getElementById('capture');
+  const recordButton = document.getElementById('record');
+  const stopRecordButton = document.getElementById('stopRecord');
+  const retryButton = document.getElementById('retry');
+  const downloadLink = document.getElementById('download');
 
-  let currentFrame = 'frame1.png';
-  let currentBackground = 'background1.png';
+  const backgroundButtons = document.getElementById('backgroundButtons');
+  const frameButtons = document.getElementById('frameButtons');
 
-  let stream;
+  let selectedBackground = 'background1.png';
+  let selectedFrame = 'frame1.png';
 
-  async function startCamera() {
-    try {
-      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-      video.srcObject = stream;
+  startButton.onclick = async () => {
+    loadingScreen.style.opacity = 0;
+    setTimeout(() => loadingScreen.style.display = 'none', 500);
+    cameraContainer.style.display = 'flex';
 
-      video.onloadedmetadata = () => {
-        loadingScreen.style.display = 'none';
-        cameraSection.style.display = 'flex';
-        controls.style.display = 'flex';
-        document.body.style.backgroundImage = `url(${currentBackground})`;
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: true });
+    video.srcObject = stream;
+
+    backgroundOverlay.src = selectedBackground;
+    frameOverlay.src = selectedFrame;
+
+    video.addEventListener('loadedmetadata', () => {
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+    });
+  };
+
+  function createSelectionButtons(buttonContainer, type) {
+    for (let i = 1; i <= 10; i++) {
+      const btn = document.createElement('img');
+      btn.src = `button${i}.png`;
+      btn.onclick = () => {
+        document.querySelectorAll(`#${buttonContainer.id} img`).forEach(el => el.classList.remove('selected'));
+        btn.classList.add('selected');
+        if (type === 'background') {
+          selectedBackground = `background${i}.png`;
+          backgroundOverlay.src = selectedBackground;
+        } else {
+          selectedFrame = `frame${i}.png`;
+          frameOverlay.src = selectedFrame;
+        }
       };
-    } catch (error) {
-      alert('Unable to access camera. Please check your permissions!');
-      console.error(error);
+      if (i === 1) btn.classList.add('selected');
+      buttonContainer.appendChild(btn);
     }
   }
 
-  window.onload = () => {
-    loadingScreen.innerHTML = '<button onclick="startCamera()">Start</button>';
+  createSelectionButtons(backgroundButtons, 'background');
+  createSelectionButtons(frameButtons, 'frame');
+
+  captureButton.onclick = () => {
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(backgroundOverlay, 0, 0, canvas.width, canvas.height);
+    ctx.drawImage(frameOverlay, 0, 0, canvas.width, canvas.height);
+    const text = prompt("Enter your name/message:");
+    if (text) {
+      ctx.font = "48px 'Schoolbell', cursive";
+      ctx.fillStyle = "white";
+      ctx.strokeStyle = "black";
+      ctx.lineWidth = 3;
+      ctx.textAlign = "center";
+      ctx.strokeText(text, canvas.width / 2, canvas.height - 60);
+      ctx.fillText(text, canvas.width / 2, canvas.height - 60);
+    }
+    downloadLink.href = canvas.toDataURL('image/png');
+    downloadLink.download = `photo_${new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15)}.png`;
+    downloadLink.style.display = 'inline-block';
   };
 
-  const swiper = new Swiper('.swiper-container', {
-    slidesPerView: 3,
-    centeredSlides: true,
-    spaceBetween: 20,
-    loop: true
-  });
-
-  swiper.on('slideChange', () => {
-    const activeSlide = swiper.slides[swiper.activeIndex];
-    const img = activeSlide.querySelector('img');
-    currentFrame = img.getAttribute('data-frame');
-    currentBackground = img.getAttribute('data-background');
-    frameOverlay.src = currentFrame;
-    document.body.style.backgroundImage = `url(${currentBackground})`;
-  });
-
-  captureButton.addEventListener('click', () => {
-    const context = canvas.getContext('2d');
-    const width = video.videoWidth;
-    const height = video.videoHeight;
-    canvas.width = width;
-    canvas.height = height;
-
-    context.save();
-    context.scale(-1, 1);
-    context.translate(-width, 0);
-    context.drawImage(video, 0, 0, width, height);
-    context.restore();
-
-    const frameImage = new Image();
-    frameImage.src = currentFrame;
-    frameImage.onload = () => {
-      context.drawImage(frameImage, 0, 0, width, height);
-      const link = document.createElement('a');
-      link.href = canvas.toDataURL('image/png');
-      link.download = 'photo.png';
-      link.click();
+  recordButton.onclick = () => {
+    mediaRecorder = new MediaRecorder(stream);
+    recordedChunks = [];
+    mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
+    mediaRecorder.onstop = () => {
+      const blob = new Blob(recordedChunks, { type: 'video/webm' });
+      const url = URL.createObjectURL(blob);
+      downloadLink.href = url;
+      downloadLink.download = `video_${new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15)}.webm`;
+      downloadLink.style.display = 'inline-block';
     };
-  });
+    mediaRecorder.start();
+    recordButton.style.display = 'none';
+    stopRecordButton.style.display = 'inline-block';
+  };
+
+  stopRecordButton.onclick = () => {
+    mediaRecorder.stop();
+    stopRecordButton.style.display = 'none';
+    recordButton.style.display = 'inline-block';
+  };
+
+  retryButton.onclick = () => location.reload();
 </script>
 
 </body>
