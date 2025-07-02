@@ -3,240 +3,254 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>Snap Your Moment!</title>
 
   <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Schoolbell&display=swap" rel="stylesheet">
-
   <style>
-    body, html {
-      margin: 0;
-      padding: 0;
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
       font-family: 'Chewy', cursive;
-      height: 100%;
-      overflow: hidden;
-      background: url('BG%20DEMO.png') no-repeat center center fixed;
+      background: url('BG DEMO.png') no-repeat center center fixed;
       background-size: cover;
+      height: 100vh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
     }
-
     #loading {
       position: fixed;
       width: 100%;
       height: 100%;
+      background: url('BG DEMO.png') no-repeat center center fixed;
+      background-size: cover;
+      backdrop-filter: blur(8px);
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 24px;
-      font-family: 'Chewy', cursive;
-      background: url('BG%20DEMO.png') no-repeat center center fixed;
-      background-size: cover;
-      backdrop-filter: blur(8px);
+      font-size: 32px;
+      font-weight: bold;
       z-index: 999;
       transition: opacity 0.5s ease;
     }
-
-    #startButton {
-      padding: 15px 30px;
-      font-size: 20px;
+    #startPage {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background: url('BG DEMO.png') no-repeat center center fixed;
+      background-size: cover;
+      z-index: 10;
+    }
+    #startPage button {
+      font-size: 24px;
+      padding: 12px 32px;
       border: none;
-      border-radius: 10px;
+      border-radius: 12px;
       background-color: #1e88e5;
       color: white;
       cursor: pointer;
+      font-family: 'Chewy', cursive;
     }
-
-    #camera-container {
+    #mainApp {
       display: none;
       flex-direction: column;
       align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-
-    #videoWrapper {
-      position: relative;
-      width: 90%;
-      max-width: 360px;
-    }
-
-    video, canvas, #frameOverlay, #backgroundOverlay {
+      justify-content: flex-start;
       width: 100%;
-      border-radius: 16px;
-      object-fit: cover;
-      position: absolute;
-      top: 0;
-      left: 0;
-    }
-
-    #controls {
-      margin-top: 20px;
-    }
-
-    .scroll-buttons {
-      display: flex;
-      overflow-x: auto;
+      height: 100%;
       padding: 10px;
-      width: 100%;
     }
-
-    .scroll-buttons img {
+    #cameraWrapper {
+      position: relative;
+      width: 100%;
+      max-width: 400px;
+      aspect-ratio: 9/16;
+    }
+    video, canvas {
+      width: 100%;
+      height: 100%;
+      border-radius: 12px;
+      object-fit: cover;
+    }
+    #frameOverlay {
+      position: absolute;
+      top: 0; left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+    #buttons {
+      display: flex;
+      overflow-x: scroll;
+      margin-top: 10px;
+      width: 100%;
+      padding: 10px;
+      gap: 10px;
+    }
+    .filterButton {
+      flex: 0 0 auto;
+      border: 3px solid transparent;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.3s;
       width: 60px;
       height: 60px;
-      border-radius: 50%;
-      margin: 0 10px;
-      cursor: pointer;
-      transition: transform 0.3s ease;
     }
-
-    .scroll-buttons img.selected {
+    .filterButton.selected {
       transform: scale(1.3);
-      border: 3px solid #1e88e5;
+      border-color: #1e88e5;
     }
-
-    button {
-      margin: 8px;
-      padding: 12px 24px;
-      font-size: 16px;
-      font-family: 'Chewy', cursive;
+    #controls {
+      margin-top: 10px;
+    }
+    button.action {
+      font-size: 18px;
+      padding: 10px 20px;
       border: none;
       border-radius: 8px;
       background-color: #1e88e5;
       color: white;
       cursor: pointer;
+      margin: 5px;
+    }
+    input {
+      margin-top: 10px;
+      padding: 8px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      width: 80%;
     }
   </style>
 </head>
 
 <body>
-<div id="loading">
+<div id="loading">Loading...</div>
+<div id="startPage">
   <button id="startButton">Start</button>
 </div>
 
-<div id="camera-container">
-  <div id="videoWrapper">
+<div id="mainApp">
+  <div id="cameraWrapper">
     <video id="video" autoplay playsinline></video>
-    <canvas id="canvas"></canvas>
-    <img id="backgroundOverlay" src="" alt="" />
-    <img id="frameOverlay" src="" alt="" />
+    <img id="frameOverlay" src="frame1.png">
   </div>
 
-  <div class="scroll-buttons" id="backgroundButtons"></div>
-  <div class="scroll-buttons" id="frameButtons"></div>
+  <div id="buttons"></div>
 
   <div id="controls">
-    <button id="capture">Capture</button>
-    <button id="record">Record</button>
-    <button id="stopRecord" style="display:none;">Stop</button>
-    <button id="retry">Retake</button>
-    <a id="download" style="display:none;">Download</a>
+    <button id="capture" class="action">Capture</button>
+    <button id="record" class="action">Start Recording</button>
+    <button id="retry" class="action" style="display:none;">Retake</button>
+    <a id="download" class="action" style="display:none;">Download</a>
+    <input type="text" id="customText" placeholder="Enter your message here">
   </div>
 </div>
 
 <script>
-  let stream, mediaRecorder, recordedChunks = [];
-  const startButton = document.getElementById('startButton');
-  const loadingScreen = document.getElementById('loading');
-  const cameraContainer = document.getElementById('camera-container');
   const video = document.getElementById('video');
-  const canvas = document.getElementById('canvas');
-  const backgroundOverlay = document.getElementById('backgroundOverlay');
   const frameOverlay = document.getElementById('frameOverlay');
+  const buttonsContainer = document.getElementById('buttons');
+  const loadingScreen = document.getElementById('loading');
+  const startPage = document.getElementById('startPage');
+  const mainApp = document.getElementById('mainApp');
   const captureButton = document.getElementById('capture');
-  const recordButton = document.getElementById('record');
-  const stopRecordButton = document.getElementById('stopRecord');
   const retryButton = document.getElementById('retry');
   const downloadLink = document.getElementById('download');
+  const recordButton = document.getElementById('record');
+  const customText = document.getElementById('customText');
 
-  const backgroundButtons = document.getElementById('backgroundButtons');
-  const frameButtons = document.getElementById('frameButtons');
+  let stream;
+  let canvas, context;
+  let currentBackground = 'background1.png';
+  let currentFrame = 'frame1.png';
+  let recorder, recordedChunks = [];
 
-  let selectedBackground = 'background1.png';
-  let selectedFrame = 'frame1.png';
-
-  startButton.onclick = async () => {
-    loadingScreen.style.opacity = 0;
-    setTimeout(() => loadingScreen.style.display = 'none', 500);
-    cameraContainer.style.display = 'flex';
-
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' }, audio: true });
+  async function startCamera() {
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
     video.srcObject = stream;
-
-    backgroundOverlay.src = selectedBackground;
-    frameOverlay.src = selectedFrame;
-
-    video.addEventListener('loadedmetadata', () => {
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-    });
-  };
-
-  function createSelectionButtons(buttonContainer, type) {
-    for (let i = 1; i <= 10; i++) {
-      const btn = document.createElement('img');
-      btn.src = `button${i}.png`;
-      btn.onclick = () => {
-        document.querySelectorAll(`#${buttonContainer.id} img`).forEach(el => el.classList.remove('selected'));
-        btn.classList.add('selected');
-        if (type === 'background') {
-          selectedBackground = `background${i}.png`;
-          backgroundOverlay.src = selectedBackground;
-        } else {
-          selectedFrame = `frame${i}.png`;
-          frameOverlay.src = selectedFrame;
-        }
-      };
-      if (i === 1) btn.classList.add('selected');
-      buttonContainer.appendChild(btn);
-    }
+    video.onloadedmetadata = () => {
+      loadingScreen.style.display = 'none';
+      mainApp.style.display = 'flex';
+    };
   }
 
-  createSelectionButtons(backgroundButtons, 'background');
-  createSelectionButtons(frameButtons, 'frame');
+  document.getElementById('startButton').addEventListener('click', () => {
+    startPage.style.display = 'none';
+    startCamera();
+  });
 
-  captureButton.onclick = () => {
-    const ctx = canvas.getContext('2d');
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    ctx.drawImage(backgroundOverlay, 0, 0, canvas.width, canvas.height);
-    ctx.drawImage(frameOverlay, 0, 0, canvas.width, canvas.height);
-    const text = prompt("Enter your name/message:");
-    if (text) {
-      ctx.font = "48px 'Schoolbell', cursive";
-      ctx.fillStyle = "white";
-      ctx.strokeStyle = "black";
-      ctx.lineWidth = 3;
-      ctx.textAlign = "center";
-      ctx.strokeText(text, canvas.width / 2, canvas.height - 60);
-      ctx.fillText(text, canvas.width / 2, canvas.height - 60);
-    }
-    downloadLink.href = canvas.toDataURL('image/png');
-    downloadLink.download = `photo_${new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15)}.png`;
-    downloadLink.style.display = 'inline-block';
-  };
+  for (let i = 1; i <= 10; i++) {
+    let btn = document.createElement('img');
+    btn.src = `button${i}.png`;
+    btn.className = 'filterButton';
+    if (i === 1) btn.classList.add('selected');
+    btn.addEventListener('click', () => selectFilter(i));
+    buttonsContainer.appendChild(btn);
+  }
 
-  recordButton.onclick = () => {
-    mediaRecorder = new MediaRecorder(stream);
-    recordedChunks = [];
-    mediaRecorder.ondataavailable = e => recordedChunks.push(e.data);
-    mediaRecorder.onstop = () => {
-      const blob = new Blob(recordedChunks, { type: 'video/webm' });
-      const url = URL.createObjectURL(blob);
-      downloadLink.href = url;
-      downloadLink.download = `video_${new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15)}.webm`;
+  function selectFilter(index) {
+    document.querySelectorAll('.filterButton').forEach(btn => btn.classList.remove('selected'));
+    buttonsContainer.children[index - 1].classList.add('selected');
+    currentBackground = `background${index}.png`;
+    currentFrame = `frame${index}.png`;
+    frameOverlay.src = currentFrame;
+    video.style.background = `url(${currentBackground}) no-repeat center center / cover`;
+  }
+
+  captureButton.addEventListener('click', () => {
+    canvas = document.createElement('canvas');
+    context = canvas.getContext('2d');
+    canvas.width = 1080;
+    canvas.height = 1920;
+    context.translate(canvas.width, 0);
+    context.scale(-1, 1);
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    const bg = new Image();
+    bg.src = currentBackground;
+    bg.onload = () => {
+      context.drawImage(bg, 0, 0, canvas.width, canvas.height);
+      context.drawImage(frameOverlay, 0, 0, canvas.width, canvas.height);
+      context.font = '48px Schoolbell';
+      context.fillStyle = '#ffffff';
+      context.fillText(customText.value, canvas.width / 2 - 100, canvas.height - 50);
+
+      downloadLink.href = canvas.toDataURL('image/png');
+      downloadLink.download = `photo_${Date.now()}.png`;
       downloadLink.style.display = 'inline-block';
+      retryButton.style.display = 'inline-block';
     };
-    mediaRecorder.start();
-    recordButton.style.display = 'none';
-    stopRecordButton.style.display = 'inline-block';
-  };
+  });
 
-  stopRecordButton.onclick = () => {
-    mediaRecorder.stop();
-    stopRecordButton.style.display = 'none';
-    recordButton.style.display = 'inline-block';
-  };
+  retryButton.addEventListener('click', () => location.reload());
 
-  retryButton.onclick = () => location.reload();
+  recordButton.addEventListener('click', () => {
+    if (recordButton.textContent === 'Start Recording') {
+      recorder = new MediaRecorder(stream);
+      recordedChunks = [];
+      recorder.ondataavailable = e => recordedChunks.push(e.data);
+      recorder.onstop = saveRecording;
+      recorder.start();
+      recordButton.textContent = 'Stop Recording';
+    } else {
+      recorder.stop();
+      recordButton.textContent = 'Start Recording';
+    }
+  });
+
+  function saveRecording() {
+    const blob = new Blob(recordedChunks, { type: 'video/webm' });
+    const url = URL.createObjectURL(blob);
+    downloadLink.href = url;
+    downloadLink.download = `video_${Date.now()}.webm`;
+    downloadLink.style.display = 'inline-block';
+  }
 </script>
-
 </body>
 </html>
