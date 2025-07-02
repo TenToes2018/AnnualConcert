@@ -1,17 +1,18 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
   <title>Snap Your Moment!</title>
 
-  <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Schoolbell&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Chewy&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Schoolbell&display=swap" rel="stylesheet">
+
   <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
+      margin: 0;
+      padding: 0;
       font-family: 'Chewy', cursive;
       background: url('BG DEMO.png') no-repeat center center fixed;
       background-size: cover;
@@ -21,12 +22,11 @@
       align-items: center;
       overflow: hidden;
     }
+
     #loading {
       position: fixed;
       width: 100%;
       height: 100%;
-      background: url('BG DEMO.png') no-repeat center center fixed;
-      background-size: cover;
       backdrop-filter: blur(8px);
       display: flex;
       justify-content: center;
@@ -34,223 +34,204 @@
       font-size: 32px;
       font-weight: bold;
       z-index: 999;
-      transition: opacity 0.5s ease;
     }
-    #startPage {
-      position: absolute;
-      width: 100%;
-      height: 100%;
+
+    #startScreen {
       display: flex;
-      justify-content: center;
+      flex-direction: column;
       align-items: center;
-      background: url('BG DEMO.png') no-repeat center center fixed;
-      background-size: cover;
-      z-index: 10;
     }
-    #startPage button {
+
+    #startButton {
+      padding: 15px 30px;
       font-size: 24px;
-      padding: 12px 32px;
+      font-weight: bold;
       border: none;
       border-radius: 12px;
       background-color: #1e88e5;
       color: white;
       cursor: pointer;
-      font-family: 'Chewy', cursive;
     }
-    #mainApp {
+
+    #cameraScreen {
       display: none;
       flex-direction: column;
       align-items: center;
-      justify-content: flex-start;
-      width: 100%;
-      height: 100%;
-      padding: 10px;
     }
-    #cameraWrapper {
+
+    #previewContainer {
       position: relative;
-      width: 100%;
-      max-width: 400px;
-      aspect-ratio: 9/16;
+      width: 360px;
+      height: 640px;
     }
-    video, canvas {
+
+    video, canvas, #background {
+      position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
-      border-radius: 12px;
       object-fit: cover;
     }
-    #frameOverlay {
+
+    #frame {
       position: absolute;
-      top: 0; left: 0;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
       pointer-events: none;
     }
-    #buttons {
+
+    #buttonList {
       display: flex;
       overflow-x: scroll;
-      margin-top: 10px;
-      width: 100%;
       padding: 10px;
       gap: 10px;
     }
+
     .filterButton {
       flex: 0 0 auto;
-      border: 3px solid transparent;
-      border-radius: 50%;
-      cursor: pointer;
-      transition: transform 0.3s;
       width: 60px;
       height: 60px;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: transform 0.2s;
     }
+
     .filterButton.selected {
-      transform: scale(1.3);
-      border-color: #1e88e5;
+      transform: scale(1.2);
     }
-    #controls {
-      margin-top: 10px;
-    }
-    button.action {
+
+    button {
+      margin: 10px;
+      padding: 12px 24px;
       font-size: 18px;
-      padding: 10px 20px;
+      font-family: 'Schoolbell', cursive;
       border: none;
       border-radius: 8px;
       background-color: #1e88e5;
       color: white;
       cursor: pointer;
-      margin: 5px;
-    }
-    input {
-      margin-top: 10px;
-      padding: 8px;
-      border: 1px solid #ccc;
-      border-radius: 4px;
-      width: 80%;
     }
   </style>
 </head>
 
 <body>
-<div id="loading">Loading...</div>
-<div id="startPage">
-  <button id="startButton">Start</button>
-</div>
 
-<div id="mainApp">
-  <div id="cameraWrapper">
-    <video id="video" autoplay playsinline></video>
-    <canvas id="outputCanvas"></canvas>
-    <img id="frameOverlay" src="frame1.png">
+  <div id="loading">Loading...</div>
+
+  <div id="startScreen">
+    <button id="startButton">Start</button>
   </div>
 
-  <div id="buttons"></div>
+  <div id="cameraScreen">
+    <div id="previewContainer">
+      <video id="video" autoplay playsinline></video>
+      <img id="background" src="background1.png">
+      <img id="frame" src="frame1.png">
+      <canvas id="canvas" style="display:none;"></canvas>
+    </div>
 
-  <div id="controls">
-    <button id="capture" class="action">Capture</button>
-    <button id="record" class="action">Start Recording</button>
-    <button id="retry" class="action" style="display:none;">Retake</button>
-    <a id="download" class="action" style="display:none;">Download</a>
-    <input type="text" id="customText" placeholder="Enter your message here">
+    <div id="buttonList"></div>
+
+    <button id="capture">Capture</button>
+    <button id="retry" style="display:none;">Retake</button>
+    <a id="download" style="display:none;">Download</a>
   </div>
-</div>
 
-<script>
-  const video = document.getElementById('video');
-  const canvas = document.getElementById('outputCanvas');
-  const context = canvas.getContext('2d');
-  const frameOverlay = document.getElementById('frameOverlay');
-  const buttonsContainer = document.getElementById('buttons');
-  const loadingScreen = document.getElementById('loading');
-  const startPage = document.getElementById('startPage');
-  const mainApp = document.getElementById('mainApp');
-  const captureButton = document.getElementById('capture');
-  const retryButton = document.getElementById('retry');
-  const downloadLink = document.getElementById('download');
-  const recordButton = document.getElementById('record');
-  const customText = document.getElementById('customText');
+  <script>
+    const startButton = document.getElementById('startButton');
+    const startScreen = document.getElementById('startScreen');
+    const cameraScreen = document.getElementById('cameraScreen');
+    const loadingScreen = document.getElementById('loading');
+    const video = document.getElementById('video');
+    const background = document.getElementById('background');
+    const frame = document.getElementById('frame');
+    const canvas = document.getElementById('canvas');
+    const captureButton = document.getElementById('capture');
+    const retryButton = document.getElementById('retry');
+    const downloadLink = document.getElementById('download');
+    const buttonList = document.getElementById('buttonList');
 
-  let stream;
-  let recorder, recordedChunks = [];
-  let currentBackground = 'background1.png';
-  let currentFrame = 'frame1.png';
+    let stream;
+    let currentIndex = 1;
 
-  async function startCamera() {
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-    video.srcObject = stream;
-    video.onloadedmetadata = () => {
-      loadingScreen.style.opacity = '0';
-      setTimeout(() => loadingScreen.style.display = 'none', 500);
-      mainApp.style.display = 'flex';
-      requestAnimationFrame(drawCanvas);
-    };
-  }
+    startButton.addEventListener('click', () => {
+      startScreen.style.display = 'none';
+      cameraScreen.style.display = 'flex';
+      startCamera();
+    });
 
-  function drawCanvas() {
-    context.drawImage(video, 0, 0, canvas.width, canvas.height);
-    context.globalCompositeOperation = 'destination-over';
-    const bg = new Image();
-    bg.src = currentBackground;
-    bg.onload = () => context.drawImage(bg, 0, 0, canvas.width, canvas.height);
-    context.globalCompositeOperation = 'source-over';
-    context.drawImage(frameOverlay, 0, 0, canvas.width, canvas.height);
-    requestAnimationFrame(drawCanvas);
-  }
+    async function startCamera() {
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        video.srcObject = stream;
 
-  document.getElementById('startButton').addEventListener('click', () => {
-    startPage.style.display = 'none';
-    startCamera();
-  });
-
-  for (let i = 1; i <= 10; i++) {
-    let btn = document.createElement('img');
-    btn.src = `button${i}.png`;
-    btn.className = 'filterButton';
-    if (i === 1) btn.classList.add('selected');
-    btn.addEventListener('click', () => selectFilter(i));
-    buttonsContainer.appendChild(btn);
-  }
-
-  function selectFilter(index) {
-    document.querySelectorAll('.filterButton').forEach(btn => btn.classList.remove('selected'));
-    buttonsContainer.children[index - 1].classList.add('selected');
-    currentBackground = `background${index}.png`;
-    currentFrame = `frame${index}.png`;
-    frameOverlay.src = currentFrame;
-  }
-
-  captureButton.addEventListener('click', () => {
-    const link = document.createElement('a');
-    link.href = canvas.toDataURL('image/png');
-    link.download = `photo_${Date.now()}.png`;
-    link.click();
-  });
-
-  retryButton.addEventListener('click', () => location.reload());
-
-  recordButton.addEventListener('click', () => {
-    if (recordButton.textContent === 'Start Recording') {
-      recorder = new MediaRecorder(canvas.captureStream());
-      recordedChunks = [];
-      recorder.ondataavailable = e => recordedChunks.push(e.data);
-      recorder.onstop = saveRecording;
-      recorder.start();
-      recordButton.textContent = 'Stop Recording';
-    } else {
-      recorder.stop();
-      recordButton.textContent = 'Start Recording';
+        video.onloadedmetadata = () => {
+          loadingScreen.style.display = 'none';
+        };
+      } catch (error) {
+        alert('Camera access denied.');
+        console.error(error);
+      }
     }
-  });
 
-  function saveRecording() {
-    const blob = new Blob(recordedChunks, { type: 'video/webm' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `video_${Date.now()}.webm`;
-    link.click();
-  }
+    for (let i = 1; i <= 10; i++) {
+      const btn = document.createElement('img');
+      btn.src = `button${i}.png`;
+      btn.classList.add('filterButton');
+      if (i === 1) btn.classList.add('selected');
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.filterButton').forEach(b => b.classList.remove('selected'));
+        btn.classList.add('selected');
+        currentIndex = i;
+        background.src = `background${i}.png`;
+        frame.src = `frame${i}.png`;
+      });
+      buttonList.appendChild(btn);
+    }
 
-  canvas.width = 1080;
-  canvas.height = 1920;
-</script>
+    captureButton.addEventListener('click', () => {
+      const context = canvas.getContext('2d');
+      const width = 1080;
+      const height = 1920;
+      canvas.width = width;
+      canvas.height = height;
+
+      context.save();
+      context.scale(-1, 1);
+      context.translate(-width, 0);
+      context.drawImage(video, 0, 0, width, height);
+      context.restore();
+
+      const bg = new Image();
+      bg.src = `background${currentIndex}.png`;
+      bg.onload = () => {
+        context.drawImage(bg, 0, 0, width, height);
+
+        const fr = new Image();
+        fr.src = `frame${currentIndex}.png`;
+        fr.onload = () => {
+          context.drawImage(fr, 0, 0, width, height);
+
+          canvas.style.display = 'block';
+          downloadLink.href = canvas.toDataURL('image/png');
+          downloadLink.download = `photo_${new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15)}.png`;
+          downloadLink.style.display = 'inline-block';
+          captureButton.style.display = 'none';
+          retryButton.style.display = 'inline-block';
+          stream.getTracks().forEach(track => track.stop());
+          video.style.display = 'none';
+        };
+      };
+    });
+
+    retryButton.addEventListener('click', () => {
+      location.reload();
+    });
+  </script>
+
 </body>
+
 </html>
