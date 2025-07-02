@@ -34,6 +34,7 @@
       font-size: 32px;
       font-weight: bold;
       z-index: 999;
+      flex-direction: column;
     }
 
     #startScreen {
@@ -61,8 +62,10 @@
 
     #previewContainer {
       position: relative;
-      width: 360px;
-      height: 640px;
+      width: 100%;
+      max-width: 360px;
+      height: auto;
+      aspect-ratio: 9/16;
     }
 
     video, canvas, #background {
@@ -97,7 +100,7 @@
       height: 60px;
       border-radius: 50%;
       cursor: pointer;
-      transition: transform 0.2s;
+      transition: transform 0.3s ease;
     }
 
     .filterButton.selected {
@@ -136,6 +139,7 @@
 
     <div id="buttonList"></div>
 
+    <button id="switchCamera">Switch Camera</button>
     <button id="capture">Capture</button>
     <button id="retry" style="display:none;">Retake</button>
     <a id="download" style="display:none;">Download</a>
@@ -154,9 +158,11 @@
     const retryButton = document.getElementById('retry');
     const downloadLink = document.getElementById('download');
     const buttonList = document.getElementById('buttonList');
+    const switchCameraButton = document.getElementById('switchCamera');
 
     let stream;
     let currentIndex = 1;
+    let useFrontCamera = true;
 
     startButton.addEventListener('click', () => {
       startScreen.style.display = 'none';
@@ -165,19 +171,29 @@
     });
 
     async function startCamera() {
+      if (stream) {
+        stream.getTracks().forEach(track => track.stop());
+      }
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: useFrontCamera ? 'user' : { exact: 'environment' } } });
         video.srcObject = stream;
         video.play();
 
-        video.onloadedmetadata = () => {
-          loadingScreen.style.display = 'none';
+        video.onloadeddata = () => {
+          setTimeout(() => {
+            loadingScreen.style.display = 'none';
+          }, 500);
         };
       } catch (error) {
-        loadingScreen.innerText = 'Camera access denied or not supported.';
+        loadingScreen.innerHTML = '无法访问相机，请检查权限。<br><button onclick="location.reload()">返回重试</button>';
         console.error(error);
       }
     }
+
+    switchCameraButton.addEventListener('click', () => {
+      useFrontCamera = !useFrontCamera;
+      startCamera();
+    });
 
     for (let i = 1; i <= 10; i++) {
       const btn = document.createElement('img');
@@ -201,16 +217,16 @@
       canvas.width = width;
       canvas.height = height;
 
-      context.save();
-      context.scale(-1, 1);
-      context.translate(-width, 0);
-      context.drawImage(video, 0, 0, width, height);
-      context.restore();
-
       const bg = new Image();
       bg.src = `background${currentIndex}.png`;
       bg.onload = () => {
         context.drawImage(bg, 0, 0, width, height);
+
+        context.save();
+        context.scale(-1, 1);
+        context.translate(-width, 0);
+        context.drawImage(video, 0, 0, width, height);
+        context.restore();
 
         const fr = new Image();
         fr.src = `frame${currentIndex}.png`;
@@ -223,6 +239,8 @@
           downloadLink.style.display = 'inline-block';
           captureButton.style.display = 'none';
           retryButton.style.display = 'inline-block';
+
+          // 允许继续切换背景与边框
           stream.getTracks().forEach(track => track.stop());
           video.style.display = 'none';
         };
