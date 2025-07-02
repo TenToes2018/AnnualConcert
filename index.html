@@ -1,220 +1,228 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <title>Snap Your Moment!</title>
 
   <!-- Google Fonts -->
-  <link href="https://fonts.googleapis.com/css2?family=Chewy&display=swap" rel="stylesheet">
-
-  <!-- SwiperJS CDN -->
+  <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Schoolbell&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://unpkg.com/swiper/swiper-bundle.min.css">
 
   <style>
-    body, html {
+    body {
       margin: 0;
       padding: 0;
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
       font-family: 'Chewy', cursive;
       background: url('bg_demo.png') no-repeat center center fixed;
       background-size: cover;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      overflow: hidden;
     }
 
     #loading {
-      position: absolute;
+      position: fixed;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
-      backdrop-filter: blur(10px);
+      background: url('bg_demo.png') no-repeat center center fixed;
+      background-size: cover;
       display: flex;
       justify-content: center;
       align-items: center;
+      font-family: 'Schoolbell', cursive;
       font-size: 32px;
-      font-weight: bold;
+      color: #000;
       z-index: 999;
+      backdrop-filter: blur(8px);
     }
 
-    #startButton {
-      padding: 15px 30px;
-      font-size: 20px;
-      background-color: #ff4081;
-      color: white;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-    }
-
-    #cameraContainer {
-      position: relative;
+    #camera-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
       width: 100%;
-      height: 100%;
-      display: none;
+      height: 70%;
+      position: relative;
     }
 
     video, canvas {
-      position: absolute;
       width: 100%;
       height: 100%;
       object-fit: cover;
       transform: scaleX(-1);
+      position: absolute;
+      top: 0;
+      left: 0;
     }
 
-    #frameImage {
+    #frame-overlay {
       position: absolute;
+      top: 0;
+      left: 0;
       width: 100%;
       height: 100%;
       pointer-events: none;
     }
 
-    #captureButton {
-      position: absolute;
-      bottom: 100px;
-      left: 50%;
-      transform: translateX(-50%);
-      padding: 15px 30px;
-      font-size: 20px;
-      background-color: #1e88e5;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      cursor: pointer;
+    #controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 30%;
+      width: 100%;
     }
 
-    .swiper {
-      position: absolute;
-      bottom: 20px;
+    #capture {
+      margin: 8px;
+      padding: 12px 24px;
+      font-size: 18px;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
+      background-color: #1e88e5;
+      color: white;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      cursor: pointer;
+      font-family: 'Chewy', cursive;
+    }
+
+    .swiper-container {
       width: 100%;
-      padding-bottom: 10px;
+      padding: 10px 0;
     }
 
     .swiper-slide {
       width: 80px;
       height: 80px;
-      opacity: 0.5;
-      transition: transform 0.3s, opacity 0.3s;
+      border-radius: 10px;
+      overflow: hidden;
+      border: 3px solid transparent;
+      cursor: pointer;
+      transition: transform 0.3s, border-color 0.3s;
     }
 
-    .swiper-slide-thumb-active {
-      transform: scale(1.2);
-      opacity: 1;
-    }
-
-    .swiper-slide img {
-      width: 100%;
-      border-radius: 50%;
-      border: 3px solid #fff;
+    .swiper-slide-active {
+      transform: scale(1.3);
+      border-color: #1e88e5;
     }
   </style>
 </head>
-
 <body>
 
-  <div id="loading">
-    <button id="startButton">Start</button>
-  </div>
+<div id="loading">Loading...</div>
 
-  <div id="cameraContainer">
-    <video id="video" autoplay playsinline></video>
-    <canvas id="canvas"></canvas>
-    <img id="frameImage" src="frame1.png">
-    <button id="captureButton">📸</button>
+<div id="camera-section" style="display: none;">
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas" style="display: none;"></canvas>
+  <img id="frame-overlay" src="frame1.png" alt="Frame">
+</div>
 
-    <!-- Swiper -->
-    <div class="swiper">
-      <div class="swiper-wrapper" id="filterSelector">
-        <!-- buttons will be loaded here -->
-      </div>
+<div id="controls" style="display: none;">
+  <button id="capture">Capture</button>
+
+  <div class="swiper-container">
+    <div class="swiper-wrapper">
+      <!-- Buttons 1 to 10 -->
+      <div class="swiper-slide"><img src="button1.png" data-frame="frame1.png" data-background="background1.png"></div>
+      <div class="swiper-slide"><img src="button2.png" data-frame="frame2.png" data-background="background2.png"></div>
+      <div class="swiper-slide"><img src="button3.png" data-frame="frame3.png" data-background="background3.png"></div>
+      <div class="swiper-slide"><img src="button4.png" data-frame="frame4.png" data-background="background4.png"></div>
+      <div class="swiper-slide"><img src="button5.png" data-frame="frame5.png" data-background="background5.png"></div>
+      <div class="swiper-slide"><img src="button6.png" data-frame="frame6.png" data-background="background6.png"></div>
+      <div class="swiper-slide"><img src="button7.png" data-frame="frame7.png" data-background="background7.png"></div>
+      <div class="swiper-slide"><img src="button8.png" data-frame="frame8.png" data-background="background8.png"></div>
+      <div class="swiper-slide"><img src="button9.png" data-frame="frame9.png" data-background="background9.png"></div>
+      <div class="swiper-slide"><img src="button10.png" data-frame="frame10.png" data-background="background10.png"></div>
     </div>
   </div>
+</div>
 
-  <script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+<script src="https://unpkg.com/swiper/swiper-bundle.min.js"></script>
+<script>
+  const loadingScreen = document.getElementById('loading');
+  const cameraSection = document.getElementById('camera-section');
+  const controls = document.getElementById('controls');
+  const video = document.getElementById('video');
+  const canvas = document.getElementById('canvas');
+  const frameOverlay = document.getElementById('frame-overlay');
+  const captureButton = document.getElementById('capture');
 
-  <script>
-    const startButton = document.getElementById('startButton');
-    const loadingScreen = document.getElementById('loading');
-    const cameraContainer = document.getElementById('cameraContainer');
-    const video = document.getElementById('video');
-    const canvas = document.getElementById('canvas');
-    const frameImage = document.getElementById('frameImage');
-    const captureButton = document.getElementById('captureButton');
+  let currentFrame = 'frame1.png';
+  let currentBackground = 'background1.png';
 
-    let stream;
-    let selectedIndex = 0;
+  let stream;
 
-    const frames = [
-      'frame1.png', 'frame2.png', 'frame3.png', 'frame4.png', 'frame5.png',
-      'frame6.png', 'frame7.png', 'frame8.png', 'frame9.png', 'frame10.png'
-    ];
+  async function startCamera() {
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
+      video.srcObject = stream;
 
-    const backgrounds = [
-      'background1.png', 'background2.png', 'background3.png', 'background4.png', 'background5.png',
-      'background6.png', 'background7.png', 'background8.png', 'background9.png', 'background10.png'
-    ];
-
-    const buttons = [
-      'button1.png', 'button2.png', 'button3.png', 'button4.png', 'button5.png',
-      'button6.png', 'button7.png', 'button8.png', 'button9.png', 'button10.png'
-    ];
-
-    const swiperWrapper = document.getElementById('filterSelector');
-
-    buttons.forEach((btn, index) => {
-      const slide = document.createElement('div');
-      slide.className = 'swiper-slide';
-      slide.innerHTML = `<img src="${btn}" />`;
-      swiperWrapper.appendChild(slide);
-    });
-
-    let swiper = new Swiper('.swiper', {
-      slidesPerView: 5,
-      centeredSlides: true,
-      slideToClickedSlide: true,
-      on: {
-        slideChange: function () {
-          selectedIndex = this.activeIndex;
-          frameImage.src = frames[selectedIndex];
-          document.body.style.backgroundImage = `url('${backgrounds[selectedIndex]}')`;
-        }
-      }
-    });
-
-    startButton.addEventListener('click', async () => {
-      loadingScreen.style.display = 'none';
-      cameraContainer.style.display = 'block';
-
-      try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
-        video.srcObject = stream;
-      } catch (error) {
-        alert('Unable to access camera');
-      }
-    });
-
-    captureButton.addEventListener('click', () => {
-      const context = canvas.getContext('2d');
-      canvas.width = video.videoWidth;
-      canvas.height = video.videoHeight;
-      context.save();
-      context.scale(-1, 1);
-      context.translate(-canvas.width, 0);
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-      context.restore();
-
-      const frame = new Image();
-      frame.src = frames[selectedIndex];
-      frame.onload = () => {
-        context.drawImage(frame, 0, 0, canvas.width, canvas.height);
-        const downloadLink = document.createElement('a');
-        downloadLink.href = canvas.toDataURL('image/png');
-        downloadLink.download = `photo_${Date.now()}.png`;
-        downloadLink.click();
+      video.onloadedmetadata = () => {
+        loadingScreen.style.display = 'none';
+        cameraSection.style.display = 'flex';
+        controls.style.display = 'flex';
+        document.body.style.backgroundImage = `url(${currentBackground})`;
       };
-    });
-  </script>
+    } catch (error) {
+      alert('Unable to access camera. Please check your permissions!');
+      console.error(error);
+    }
+  }
+
+  window.onload = () => {
+    loadingScreen.innerHTML = '<button onclick="startCamera()">Start</button>';
+  };
+
+  const swiper = new Swiper('.swiper-container', {
+    slidesPerView: 3,
+    centeredSlides: true,
+    spaceBetween: 20,
+    loop: true
+  });
+
+  swiper.on('slideChange', () => {
+    const activeSlide = swiper.slides[swiper.activeIndex];
+    const img = activeSlide.querySelector('img');
+    currentFrame = img.getAttribute('data-frame');
+    currentBackground = img.getAttribute('data-background');
+    frameOverlay.src = currentFrame;
+    document.body.style.backgroundImage = `url(${currentBackground})`;
+  });
+
+  captureButton.addEventListener('click', () => {
+    const context = canvas.getContext('2d');
+    const width = video.videoWidth;
+    const height = video.videoHeight;
+    canvas.width = width;
+    canvas.height = height;
+
+    context.save();
+    context.scale(-1, 1);
+    context.translate(-width, 0);
+    context.drawImage(video, 0, 0, width, height);
+    context.restore();
+
+    const frameImage = new Image();
+    frameImage.src = currentFrame;
+    frameImage.onload = () => {
+      context.drawImage(frameImage, 0, 0, width, height);
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = 'photo.png';
+      link.click();
+    };
+  });
+</script>
 
 </body>
-
 </html>
