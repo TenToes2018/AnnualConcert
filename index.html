@@ -7,6 +7,7 @@
   <meta name="mobile-web-app-capable" content="yes">
   <title>Snap Your Moment!</title>
 
+  <!-- Google Fonts -->
   <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Schoolbell&display=swap" rel="stylesheet">
 
   <style>
@@ -20,93 +21,92 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      flex-direction: column;
-    }
-
-    #startScreen, #loading, #camera-container, #controls, #backgroundButtons {
-      display: none;
-    }
-
-    #startScreen {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-    }
-
-    #startScreen button {
-      padding: 15px 30px;
-      font-size: 24px;
-      border: none;
-      border-radius: 8px;
-      background-color: #1e88e5;
-      color: white;
-      cursor: pointer;
+      overflow: hidden;
     }
 
     #loading {
       position: fixed;
-      width: 100%;
-      height: 100%;
-      background: rgba(240, 242, 245, 0.7);
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background: url('BG%20DEMO.png') no-repeat center center fixed;
+      background-size: cover;
       backdrop-filter: blur(10px);
       display: flex;
       justify-content: center;
       align-items: center;
-      font-size: 24px;
-      font-family: 'Chewy', cursive;
+      font-size: 32px;
+      color: black;
       z-index: 999;
     }
 
-    #camera-container {
-      position: relative;
-      width: 90%;
-      max-width: 360px;
+    #startButton {
+      font-size: 24px;
+      padding: 12px 24px;
+      background-color: #ff9800;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-family: 'Chewy', cursive;
     }
 
-    video, canvas, #selectedFrame, #selectedBackground {
+    #container {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255,255,255,0.9);
+      padding: 20px;
+      border-radius: 20px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+      max-width: 400px;
+      width: 90%;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+      font-size: 24px;
+      font-family: 'Schoolbell', cursive;
+      color: #1a237e;
+    }
+
+    video, canvas {
       width: 100%;
+      max-width: 360px;
       border-radius: 16px;
+      margin-bottom: 15px;
       background: white;
       object-fit: cover;
       object-position: center;
     }
 
-    #selectedBackground, #selectedFrame {
+    #frameOverlay {
       position: absolute;
-      top: 0;
-      left: 0;
-      z-index: 1;
+      width: 100%;
+      max-width: 360px;
       pointer-events: none;
     }
 
-    video {
-      transform: scaleX(-1);
-      position: relative;
-      z-index: 0;
-    }
-
-    #backgroundButtons {
+    .button-group {
       display: flex;
       overflow-x: auto;
-      margin-top: 10px;
-      width: 90%;
-      max-width: 400px;
+      margin-bottom: 10px;
+      width: 100%;
     }
 
-    #backgroundButtons img {
-      width: 60px;
-      height: 60px;
+    .filter-button {
+      flex: 0 0 auto;
       margin: 0 5px;
-      border-radius: 50%;
+      padding: 10px;
+      border: 2px solid transparent;
+      border-radius: 10px;
       cursor: pointer;
-      transition: transform 0.3s;
+      transition: transform 0.3s, border 0.3s;
     }
 
-    #backgroundButtons img.selected {
-      transform: scale(1.3);
-      border: 3px solid #1e88e5;
+    .filter-button.selected {
+      border-color: #1e88e5;
+      transform: scale(1.2);
     }
 
     button {
@@ -120,6 +120,7 @@
       color: white;
       box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       cursor: pointer;
+      font-family: 'Chewy', cursive;
     }
 
     button:hover {
@@ -146,87 +147,66 @@
 
 <body>
 
-<div id="startScreen">
-  <h2>📸 Snap Your Moment!</h2>
+<div id="loading">
   <button id="startButton">Start</button>
 </div>
 
-<div id="loading">Loading...</div>
+<div id="container">
+  <h2>📸 Snap Your Moment!</h2>
+  <div class="button-group" id="buttonGroup"></div>
 
-<div id="camera-container">
-  <img id="selectedBackground" src="" />
-  <video id="video" autoplay playsinline></video>
-  <img id="selectedFrame" src="" />
-</div>
+  <div style="position: relative;">
+    <video id="video" autoplay playsinline style="transform: scaleX(-1);"></video>
+    <img id="frameOverlay" src="frame1.png" />
+  </div>
 
-<div id="backgroundButtons"></div>
-
-<div id="controls">
   <button id="capture">Capture</button>
   <button id="retry">Retake</button>
-  <a id="download">📥 Download Photo</a>
+
+  <canvas id="canvas" style="display:none;"></canvas>
+  <a id="download" style="display:none;">📥 Download Photo</a>
 </div>
 
-<canvas id="canvas" style="display:none;"></canvas>
-
 <script>
-  const startButton = document.getElementById('startButton');
-  const startScreen = document.getElementById('startScreen');
-  const loadingScreen = document.getElementById('loading');
-  const cameraContainer = document.getElementById('camera-container');
-  const backgroundButtons = document.getElementById('backgroundButtons');
-  const controls = document.getElementById('controls');
   const video = document.getElementById('video');
   const canvas = document.getElementById('canvas');
   const captureButton = document.getElementById('capture');
   const retryButton = document.getElementById('retry');
   const downloadLink = document.getElementById('download');
-  const selectedBackground = document.getElementById('selectedBackground');
-  const selectedFrame = document.getElementById('selectedFrame');
+  const loadingScreen = document.getElementById('loading');
+  const startButton = document.getElementById('startButton');
+  const container = document.getElementById('container');
+  const frameOverlay = document.getElementById('frameOverlay');
+  const buttonGroup = document.getElementById('buttonGroup');
 
   let stream;
+  let selectedFrame = 1;
 
-  const backgrounds = Array.from({ length: 10 }, (_, i) => ({
-    background: `background${i + 1}.png`,
-    frame: `frame${i + 1}.png`,
-    button: `button${i + 1}.png`
-  }));
-
-  backgrounds.forEach((bg, index) => {
-    const img = document.createElement('img');
-    img.src = bg.button;
-    img.onclick = () => selectBackground(index);
-    backgroundButtons.appendChild(img);
-  });
-
-  let selectedIndex = 0;
-
-  function selectBackground(index) {
-    selectedIndex = index;
-    document.querySelectorAll('#backgroundButtons img').forEach((img, idx) => {
-      img.classList.toggle('selected', idx === index);
+  for (let i = 1; i <= 10; i++) {
+    const button = document.createElement('img');
+    button.src = `button${i}.png`;
+    button.classList.add('filter-button');
+    if (i === 1) button.classList.add('selected');
+    button.addEventListener('click', () => {
+      document.querySelectorAll('.filter-button').forEach(btn => btn.classList.remove('selected'));
+      button.classList.add('selected');
+      frameOverlay.src = `frame${i}.png`;
+      document.body.style.backgroundImage = `url('background${i}.png')`;
+      selectedFrame = i;
     });
-    selectedBackground.src = backgrounds[index].background;
-    selectedFrame.src = backgrounds[index].frame;
+    buttonGroup.appendChild(button);
   }
 
   startButton.addEventListener('click', () => {
-    startScreen.style.display = 'none';
-    loadingScreen.style.display = 'flex';
     startCamera();
+    loadingScreen.style.display = 'none';
+    container.style.display = 'flex';
   });
 
   async function startCamera() {
     try {
       stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
       video.srcObject = stream;
-      video.onloadedmetadata = () => {
-        loadingScreen.style.display = 'none';
-        cameraContainer.style.display = 'block';
-        controls.style.display = 'flex';
-        backgroundButtons.style.display = 'flex';
-        selectBackground(0);
-      };
     } catch (error) {
       alert('Unable to access camera. Please check your permissions!');
       console.error(error);
@@ -263,32 +243,23 @@
     context.drawImage(video, sx, sy, sWidth, sHeight, 0, 0, width, height);
     context.restore();
 
-    const bg = new Image();
-    bg.src = backgrounds[selectedIndex].background;
-    bg.onload = () => {
-      context.globalCompositeOperation = 'destination-over';
-      context.drawImage(bg, 0, 0, width, height);
-
-      const frame = new Image();
-      frame.src = backgrounds[selectedIndex].frame;
-      frame.onload = () => {
-        context.globalCompositeOperation = 'source-over';
-        context.drawImage(frame, 0, 0, width, height);
-        finishCapture();
-      };
-    };
-
-    function finishCapture() {
+    const frame = new Image();
+    frame.src = `frame${selectedFrame}.png`;
+    frame.onload = () => {
+      context.drawImage(frame, 0, 0, width, height);
+      const timestamp = new Date().toISOString().replace(/[-:.]/g, "").slice(0, 15);
+      const fileName = `photo_${timestamp}.png`;
       canvas.style.display = 'block';
-      video.style.display = 'none';
-      captureButton.style.display = 'none';
-      retryButton.style.display = 'inline-block';
       downloadLink.href = canvas.toDataURL('image/png');
-      downloadLink.download = `photo_${new Date().toISOString().replace(/[-:.]/g, '').slice(0, 15)}.png`;
+      downloadLink.download = fileName;
       downloadLink.style.display = 'inline-block';
 
       stream.getTracks().forEach(track => track.stop());
-    }
+      video.style.display = 'none';
+      frameOverlay.style.display = 'none';
+      captureButton.style.display = 'none';
+      retryButton.style.display = 'inline-block';
+    };
   });
 
   retryButton.addEventListener('click', () => {
