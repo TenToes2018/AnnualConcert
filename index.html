@@ -1,84 +1,86 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <title>Virtual Booth</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Snap Your Moment!</title>
   <link href="https://fonts.googleapis.com/css2?family=Chewy&family=Schoolbell&display=swap" rel="stylesheet">
+
   <style>
-    body {
+    body, html {
       margin: 0;
       padding: 0;
       font-family: 'Chewy', cursive;
+      height: 100%;
       background: url('BG%20DEMO.png') no-repeat center center fixed;
       background-size: cover;
-      height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
+      overflow: hidden;
     }
 
-    #startScreen, #cameraScreen {
+    #start-screen, #camera-screen {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      flex-direction: column;
+    }
+
+    #start-screen {
+      background: url('BG%20DEMO.png') no-repeat center center fixed;
+      background-size: cover;
+      z-index: 10;
+    }
+
+    #camera-screen {
+      backdrop-filter: blur(10px);
       display: none;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    #startScreen {
-      display: flex;
-    }
-
-    #cameraContainer {
-      position: relative;
-      width: 90%;
-      max-width: 360px;
     }
 
     video, canvas {
-      width: 100%;
+      width: 60%;
+      max-width: 360px;
       border-radius: 16px;
       object-fit: cover;
       object-position: center;
+      transform: scaleX(-1);
     }
 
-    .slider {
+    #slider {
       display: flex;
       overflow-x: auto;
-      width: 100%;
-      max-width: 360px;
-      margin-top: 10px;
+      margin-top: 15px;
+      width: 90%;
+      padding-bottom: 10px;
     }
 
-    .slider button {
+    .slider-button {
       flex: 0 0 auto;
+      margin: 0 5px;
       width: 60px;
       height: 60px;
-      margin: 5px;
       border-radius: 50%;
-      border: 2px solid #1e88e5;
-      background-color: white;
-      font-size: 14px;
+      border: 3px solid white;
+      background-size: cover;
       cursor: pointer;
-      transition: transform 0.3s;
+      transition: transform 0.2s;
     }
 
-    .slider button.selected {
-      transform: scale(1.2);
-      background-color: #1e88e5;
-      color: white;
+    .slider-button.active {
+      transform: scale(1.3);
+      border: 3px solid yellow;
     }
 
-    button.control {
-      margin: 10px;
+    button, a {
+      font-family: 'Chewy', cursive;
       padding: 10px 20px;
+      margin: 10px;
+      font-size: 18px;
       border: none;
       border-radius: 8px;
       background-color: #1e88e5;
       color: white;
-      font-family: 'Chewy', cursive;
       cursor: pointer;
     }
 
@@ -86,138 +88,136 @@
       position: fixed;
       width: 100%;
       height: 100%;
-      background: #f0f2f5;
+      background: rgba(255,255,255,0.8);
       display: flex;
       justify-content: center;
       align-items: center;
       font-size: 24px;
-      font-family: 'Chewy', cursive;
+      font-weight: bold;
       z-index: 999;
     }
   </style>
 </head>
 
 <body>
-
 <div id="loading">Loading...</div>
 
-<div id="startScreen">
-  <button class="control" onclick="startApp()">Start</button>
+<div id="start-screen">
+  <button id="startButton">Start</button>
 </div>
 
-<div id="cameraScreen">
-  <div id="cameraContainer">
-    <video id="video" autoplay playsinline></video>
-    <canvas id="canvas" style="display:none;"></canvas>
+<div id="camera-screen">
+  <video id="video" autoplay playsinline></video>
+  <canvas id="canvas" style="display:none;"></canvas>
+  <div id="slider"></div>
+  <div>
+    <button id="capture">Capture</button>
+    <button id="retry" style="display:none;">Retake</button>
   </div>
-
-  <div class="slider" id="sliderButtons"></div>
-
-  <button class="control" id="capture">Capture</button>
-  <button class="control" id="retry" style="display:none;" onclick="location.reload()">Retake</button>
-  <a id="download" class="control" style="display:none;">Download Photo</a>
+  <a id="download" style="display:none;">Download Photo</a>
 </div>
 
 <script>
+  const startButton = document.getElementById('startButton');
+  const startScreen = document.getElementById('start-screen');
+  const cameraScreen = document.getElementById('camera-screen');
   const video = document.getElementById('video');
   const canvas = document.getElementById('canvas');
-  const slider = document.getElementById('sliderButtons');
   const captureButton = document.getElementById('capture');
+  const retryButton = document.getElementById('retry');
   const downloadLink = document.getElementById('download');
   const loadingScreen = document.getElementById('loading');
+  const slider = document.getElementById('slider');
 
   let stream;
-  let selectedIndex = 0;
+  let currentIndex = 0;
+  let backgrounds = [];
+  let frames = [];
 
-  const backgrounds = ['background1.png', 'background2.png', 'background3.png', 'background4.png', 'background5.png', 'background6.png'];
-  const frames = ['frame1.png', 'frame2.png', 'frame3.png', 'frame4.png', 'frame5.png', 'frame6.png'];
-
-  function startApp() {
-    document.getElementById('startScreen').style.display = 'none';
-    document.getElementById('cameraScreen').style.display = 'flex';
-    document.body.style.filter = 'blur(5px)';
-    startCamera();
+  for (let i = 1; i <= 6; i++) {
+    backgrounds.push(`background${i}.png`);
+    frames.push(`frame${i}.png`);
   }
+
+  startButton.addEventListener('click', () => {
+    startScreen.style.display = 'none';
+    cameraScreen.style.display = 'flex';
+    startCamera();
+  });
 
   async function startCamera() {
     try {
       stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'user' } });
       video.srcObject = stream;
-      video.play().catch(() => {
-        loadingScreen.innerHTML = 'Camera failed to start. Please refresh.';
-      });
-
-      video.onloadedmetadata = () => {
-        loadingScreen.style.display = 'none';
-        setupSlider();
-      };
-
+      video.play();
+      loadingScreen.style.display = 'none';
+      createSlider();
     } catch (error) {
-      loadingScreen.innerHTML = 'Unable to access camera. Please check permissions.';
-      console.error(error);
+      loadingScreen.innerHTML = 'Camera access failed. Please check permissions.<br><button onclick="location.reload()">Retry</button>';
     }
   }
 
-  function setupSlider() {
-    for (let i = 0; i < backgrounds.length; i++) {
-      const btn = document.createElement('button');
-      btn.innerText = i + 1;
-      btn.onclick = () => selectBackgroundFrame(i);
+  function createSlider() {
+    backgrounds.forEach((bg, index) => {
+      const btn = document.createElement('div');
+      btn.classList.add('slider-button');
+      btn.style.backgroundImage = `url(${bg})`;
+      if (index === 0) btn.classList.add('active');
+      btn.addEventListener('click', () => selectBackground(index));
       slider.appendChild(btn);
-    }
-    selectBackgroundFrame(0);
+    });
+    updatePreview();
   }
 
-  function selectBackgroundFrame(index) {
-    selectedIndex = index;
-    Array.from(slider.children).forEach((btn, idx) => {
-      btn.classList.toggle('selected', idx === index);
-    });
+  function selectBackground(index) {
+    document.querySelectorAll('.slider-button').forEach(btn => btn.classList.remove('active'));
+    slider.children[index].classList.add('active');
+    currentIndex = index;
+    updatePreview();
+  }
+
+  function updatePreview() {
+    cameraScreen.style.background = `url(${backgrounds[currentIndex]}) center center / cover no-repeat`;
   }
 
   captureButton.addEventListener('click', () => {
     const context = canvas.getContext('2d');
-    const width = video.videoWidth;
-    const height = video.videoHeight;
-    canvas.width = width;
-    canvas.height = height;
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
 
     context.filter = 'brightness(1.1) contrast(1.1) saturate(1.2)';
-    context.drawImage(video, 0, 0, width, height);
+    context.scale(-1, 1);
+    context.translate(-canvas.width, 0);
+    context.drawImage(video, 0, 0, canvas.width, canvas.height);
+    context.setTransform(1, 0, 0, 1, 0, 0);
 
-    const bg = new Image();
-    bg.src = backgrounds[selectedIndex];
-    bg.onload = () => {
-      context.globalCompositeOperation = 'destination-over';
-      context.drawImage(bg, 0, 0, width, height);
-
-      const frame = new Image();
-      frame.src = frames[selectedIndex];
-      frame.onload = () => {
-        context.globalCompositeOperation = 'source-over';
-        context.drawImage(frame, 0, 0, width, height);
-
-        const text = prompt('Enter your name/message:');
-        if (text) {
-          context.font = "48px 'Schoolbell', cursive";
-          context.fillStyle = 'white';
-          context.strokeStyle = 'black';
-          context.lineWidth = 3;
-          context.textAlign = 'center';
-          context.strokeText(text, width / 2, height - 60);
-          context.fillText(text, width / 2, height - 60);
-        }
-
-        canvas.style.display = 'block';
-        video.style.display = 'none';
-        captureButton.style.display = 'none';
-        downloadLink.href = canvas.toDataURL('image/png');
-        downloadLink.style.display = 'inline-block';
-      };
+    const frame = new Image();
+    frame.src = frames[currentIndex];
+    frame.onload = () => {
+      context.drawImage(frame, 0, 0, canvas.width, canvas.height);
+      const text = prompt('Enter your name/message:');
+      if (text) {
+        context.font = "48px 'Schoolbell', cursive";
+        context.fillStyle = "white";
+        context.strokeStyle = "black";
+        context.lineWidth = 3;
+        context.textAlign = "center";
+        context.strokeText(text, canvas.width / 2, canvas.height - 60);
+        context.fillText(text, canvas.width / 2, canvas.height - 60);
+      }
+      video.style.display = 'none';
+      canvas.style.display = 'block';
+      captureButton.style.display = 'none';
+      retryButton.style.display = 'inline-block';
+      downloadLink.href = canvas.toDataURL('image/png');
+      downloadLink.style.display = 'inline-block';
     };
+  });
+
+  retryButton.addEventListener('click', () => {
+    location.reload();
   });
 </script>
 
 </body>
-
 </html>
