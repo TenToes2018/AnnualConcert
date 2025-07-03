@@ -118,6 +118,10 @@
 </div>
 
 <script>
+  if (location.protocol !== 'https:') {
+    alert('This application requires HTTPS to access the camera. Please use a secure connection.');
+  }
+
   const startButton = document.getElementById('startButton');
   const startScreen = document.getElementById('start-screen');
   const cameraScreen = document.getElementById('camera-screen');
@@ -139,10 +143,10 @@
     frames.push(`frame${i}.png`);
   }
 
-  startButton.addEventListener('click', () => {
+  startButton.addEventListener('click', async () => {
     startScreen.style.display = 'none';
     cameraScreen.style.display = 'flex';
-    startCamera();
+    await startCamera();
   });
 
   async function startCamera() {
